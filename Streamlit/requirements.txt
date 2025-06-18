@@ -1,0 +1,4 @@
+# python==3.10.17
+pandas==2.2.3
+requests==2.32.3
+pillow==11.2.1
