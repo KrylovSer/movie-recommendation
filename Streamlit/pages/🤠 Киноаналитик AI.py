@@ -64,7 +64,7 @@ vector_store = QdrantVectorStore(
 )
 
 llm = ChatGroq(
-    api_key="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",
+    api_key="",
     model="deepseek-r1-distill-llama-70b",
     temperature=1.3,
     max_tokens=700
