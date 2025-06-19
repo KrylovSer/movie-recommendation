@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import os
 from PIL import Image
 from io import BytesIO
 
@@ -8,8 +9,10 @@ CSV_FILE = "films_data.csv"
 
 @st.cache_resource
 def load_data():
-    df = pd.read_csv(CSV_FILE)
-    return df
+    if not os.path.exists(CSV_FILE):
+        st.error(f"Файл `{CSV_FILE}` не найден. Загрузите его или проверьте путь.")
+        return pd.DataFrame()
+    return pd.read_csv(CSV_FILE)
 
 @st.cache_data(show_spinner=False)
 def load_image_from_url(url):
@@ -24,7 +27,9 @@ def main():
     st.set_page_config(layout="wide")
     st.markdown("<h1 style='text-align: center; color: #d4a5a5; font-size: 48px;'>🎬 10 случайных фильмов</h1>", unsafe_allow_html=True)
 
-    df = load_data()
+    with st.spinner("Загружаем данные..."):
+        df = load_data()
+
 
     if df.empty:
         st.warning("Файл пустой или не найден.")
@@ -55,7 +60,8 @@ def main():
                     st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Режиссер:</b> {row['director']}</p>", unsafe_allow_html=True)
                     st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Актеры:</b> {row['actors']}</p>", unsafe_allow_html=True)
                     st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Рейтинг IMDb:</b> {row['rating']}</p>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='font-size:22px; color:#ffecda; line-height:1.2; margin:0.2'> {row['description']}</p>", unsafe_allow_html=True)
+                    st.markdown(f"""<div style='max-height: 200px; overflow-y: auto; font-size:22px; color:#ffecda; line-height:1.2; margin:0.2'>{row['description']}</div>""", unsafe_allow_html=True)
+
                 st.divider()
 
 if __name__ == "__main__":
