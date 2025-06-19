@@ -14,7 +14,7 @@ def load_data():
     if not os.path.exists(CSV_FILE):
         st.error(f"Файл `{CSV_FILE}` не найден. Загрузите его или проверьте путь.")
         return pd.DataFrame()
-    return pd.read_csv(CSV_FILE)
+    return pd.read_csv(CSV_FILE, encoding="utf-8")
 
 @st.cache_data(show_spinner=False)
 def load_image_from_url(url):
