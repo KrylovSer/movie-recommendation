@@ -5,7 +5,7 @@ import os
 from PIL import Image
 from io import BytesIO
 
-CSV_FILE = "films_data.csv"
+CSV_FILE = os.path.join(os.path.dirname(__file__), "..", "films_data.csv")
 
 @st.cache_resource
 def load_data():
