@@ -7,6 +7,7 @@ from io import BytesIO
 
 CSV_FILE = os.path.join(os.path.dirname(__file__), "..", "films_data.csv")
 st.write("Ищу файл по пути:", CSV_FILE)
+st.write("CSV существует?", os.path.exists(CSV_FILE))
 
 @st.cache_resource
 def load_data():
