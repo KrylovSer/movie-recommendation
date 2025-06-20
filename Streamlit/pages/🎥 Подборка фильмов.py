@@ -51,8 +51,8 @@ from pathlib import Path
 
 @st.cache_data
 def load_dict():
-    # Путь к файлу dict_filtr.json от текущего .py файла
-    path_to_file = Path(__file__).resolve().parents[2] / "dict_filtr.json"
+    # Путь к корню проекта и JSON-файлу
+    path_to_file = Path(__file__).resolve().parent.parent / "dict_filtr.json"
 
     if not path_to_file.exists():
         st.error(f"❌ Файл не найден: {path_to_file}")
