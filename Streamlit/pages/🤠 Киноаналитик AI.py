@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import json
+import os
+from pathlib import Path
 from PIL import Image
 from io import BytesIO
 from langchain_qdrant import QdrantVectorStore
@@ -25,9 +27,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+QDRANT_FILE = os.path.join(os.path.dirname(__file__), "../..", "db/qdrant_db")
+
 @st.cache_resource
 def get_qdrant_client():
-    return QdrantClient(path="../db/qdrant_db")
+    if not os.path.exists(QDRANT_FILE):
+        st.error(f"Файл `{QDRANT_FILE}` не найден. Загрузите его или проверьте путь.")
+        return QdrantClient()
+    return QdrantClient(path=QDRANT_FILE)
 
 client = get_qdrant_client()
 
@@ -51,11 +58,18 @@ def load_image_from_url(url):
         return None
 
 @st.cache_data
-def load_dict(filename):
-    with open(filename, 'r', encoding='utf-8') as f:
+def load_dict():
+    # Путь к корню проекта и JSON-файлу
+    path_to_file = Path(__file__).resolve().parent.parent / "dict_filtr.json"
+
+    if not path_to_file.exists():
+        st.error(f"❌ Файл не найден: {path_to_file}")
+        return {}
+
+    with open(path_to_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-dict_filtr = load_dict('dict_filtr.json')
+dict_filtr = load_dict()
 
 vector_store = QdrantVectorStore(
     client=client,
