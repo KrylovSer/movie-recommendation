@@ -47,12 +47,21 @@ def load_image_from_url(url):
     except:
         return None
 
+from pathlib import Path
+
 @st.cache_data
-def load_dict(filename):
-    with open(filename, 'r', encoding='utf-8') as f:
+def load_dict():
+    # Путь к файлу dict_filtr.json от текущего .py файла
+    path_to_file = Path(__file__).resolve().parents[2] / "dict_filtr.json"
+
+    if not path_to_file.exists():
+        st.error(f"❌ Файл не найден: {path_to_file}")
+        return {}
+
+    with open(path_to_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-dict_filtr = load_dict('../dict_filtr.json')
+dict_filtr = load_dict()
 
 vector_store = QdrantVectorStore(
     client=client,
