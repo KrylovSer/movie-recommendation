@@ -20,8 +20,6 @@ st.markdown(
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.write(f"Загружаем изображение по пути: {image_path}")
-    st.write(os.path.exists(image_path))  # Должно вывести True
     img = Image.open(image_path)
     st.image(img, width=600)
     st.write("Добро пожаловать! 👋🏻 Выберите интересующую вас страницу в меню слева.")
