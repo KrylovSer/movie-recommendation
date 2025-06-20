@@ -52,7 +52,7 @@ def load_dict(filename):
     with open(filename, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-dict_filtr = load_dict('dict_filtr.json')
+dict_filtr = load_dict('../dict_filtr.json')
 
 vector_store = QdrantVectorStore(
     client=client,
