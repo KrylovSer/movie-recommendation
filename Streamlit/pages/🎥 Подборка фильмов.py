@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import json
+from pathlib import Path
 from PIL import Image
 from io import BytesIO
 from langchain_qdrant import QdrantVectorStore
@@ -47,8 +48,6 @@ def load_image_from_url(url):
         return img
     except:
         return None
-
-from pathlib import Path
 
 @st.cache_data
 def load_dict():
