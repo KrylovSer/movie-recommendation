@@ -34,6 +34,8 @@ def get_qdrant_client():
     return QdrantClient(path=QDRANT_FILE)
 
 client = get_qdrant_client()
+collections = client.get_collections()
+print("Коллекции в базе:", [c.name for c in collections.collections])
 
 @st.cache_resource
 def load_embeddings():
