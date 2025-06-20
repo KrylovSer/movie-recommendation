@@ -24,7 +24,8 @@ st.markdown(
 
 @st.cache_resource
 def get_qdrant_client():
-    return QdrantClient(path="../db/qdrant_db")
+    db_path = Path(__file__).resolve().parent.parent / "qdrant_db"
+    return QdrantClient(path=str(db_path))
 
 client = get_qdrant_client()
 
