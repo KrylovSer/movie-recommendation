@@ -154,7 +154,7 @@ def main():
 
         if query:
             with st.spinner('Ищем лучшие рекомендации...'):
-                results = vector_store.similarity_search(query, k=2, filter=filter_obj)
+                results = vector_store.similarity_search(query, k=5, filter=filter_obj)
 
             st.markdown(f"Найдено результатов: {len(results)}")
 
