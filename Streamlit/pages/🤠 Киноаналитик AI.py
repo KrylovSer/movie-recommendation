@@ -63,15 +63,9 @@ vector_store = QdrantVectorStore(
     embedding=hf
 )
 
-llm = ChatGroq(
-    api_key="",
-    model="deepseek-r1-distill-llama-70b",
-    temperature=1.3,
-    max_tokens=700
-)
 
 film_prompt = ChatPromptTemplate.from_messages([
-    ("system", """Ты — Кристофер Торрантино 🎬: страстный кинокритик. Ты получаешь описание фильма и запрос пользователя, и сразу пишешь короткий, но живой и яркий комментарий.
+    ("system", """Ты — Кристофер Тарантино 🎬: страстный кинокритик. Ты получаешь описание фильма и запрос пользователя, и сразу пишешь короткий, но живой и яркий комментарий.
 
 🎯 Твой анализ должен:
 - Избегай вводных размышлений ("хм...", "может быть...")
@@ -91,91 +85,112 @@ film_prompt = ChatPromptTemplate.from_messages([
 def main():
     st.markdown("<h1 style='text-align: center; color: #d4a5a5; font-size: 48px;'>🧙🏻‍♂️ Киноаналитик AI</h1>", unsafe_allow_html=True)
 
-    st.markdown("### 🔍 Введите ваш запрос:")
-    query = st.text_input("Например: фэнтези про магию и путешествия", "")
+    update = 1
+    if "api_key" not in st.session_state or not st.session_state.api_key:
+        update = 0
+        api_key_input = st.text_input("Введите API-ключ:", type="password")
+        if api_key_input:
+            st.session_state.api_key = api_key_input
+            st.success("Ключ сохранён.")
+            if st.button("Продолжить"):
+                update = 1
+                pass
+    else:
+        st.success("Ключ введён")
 
-    with st.expander("⚙️🎞️ Дополнительные фильтры"):
-        selected_genres = st.multiselect("Жанры", dict_filtr['genres'])
-        selected_directors = st.multiselect("Режиссеры", dict_filtr['directors'])
-        selected_actors = st.multiselect("Актеры", dict_filtr['actors'])
-        selected_years = st.slider("Выберите диапазон годов", min_value=min(dict_filtr['years']), max_value=max(dict_filtr['years']), value=(min(dict_filtr['years']), max(dict_filtr['years'])))
-        selected_ratings = st.slider("Выберите диапазон рейтинга", min_value=min(dict_filtr['ratings']), max_value=10.0, value=(min(dict_filtr['ratings']), 10.0))
+    if update == 1:
 
-    should_conditions = []
-    must_conditions = []
+        llm = ChatGroq(
+            api_key=st.session_state.api_key,
+            model="deepseek-r1-distill-llama-70b",
+            temperature=1.3,
+            max_tokens=1000
+            )
+        st.markdown("### 🔍 Введите ваш запрос:")
+        query = st.text_input("Например: фэнтези про магию и путешествия", "")
 
-    if selected_genres:
-        should_conditions.append(FieldCondition(key="metadata.genre", match={"any": selected_genres}))
-    if selected_directors:
-        should_conditions.append(FieldCondition(key="metadata.director", match={"any": selected_directors}))
-    if selected_actors:
-        should_conditions.append(FieldCondition(key="metadata.actors", match={"any": selected_actors}))
+        with st.expander("⚙️🎞️ Дополнительные фильтры"):
+            selected_genres = st.multiselect("Жанры", dict_filtr['genres'])
+            selected_directors = st.multiselect("Режиссеры", dict_filtr['directors'])
+            selected_actors = st.multiselect("Актеры", dict_filtr['actors'])
+            selected_years = st.slider("Выберите диапазон годов", min_value=min(dict_filtr['years']), max_value=max(dict_filtr['years']), value=(min(dict_filtr['years']), max(dict_filtr['years'])))
+            selected_ratings = st.slider("Выберите диапазон рейтинга", min_value=min(dict_filtr['ratings']), max_value=10.0, value=(min(dict_filtr['ratings']), 10.0))
 
-    if selected_years:
-        must_conditions.append(FieldCondition(key="metadata.year", range=Range(gte=selected_years[0], lte=selected_years[1])))
-    if selected_ratings:
-        must_conditions.append(FieldCondition(key="metadata.rating", range=Range(gte=selected_ratings[0], lte=selected_ratings[1])))
+        should_conditions = []
+        must_conditions = []
 
-    filter_obj = None
-    if should_conditions or must_conditions:
-        filter_obj = Filter(
-            should=should_conditions if should_conditions else None,
-            must=must_conditions if must_conditions else None
-        )
+        if selected_genres:
+            should_conditions.append(FieldCondition(key="metadata.genre", match={"any": selected_genres}))
+        if selected_directors:
+            should_conditions.append(FieldCondition(key="metadata.director", match={"any": selected_directors}))
+        if selected_actors:
+            should_conditions.append(FieldCondition(key="metadata.actors", match={"any": selected_actors}))
 
-    if query:
-        with st.spinner('Ищем лучшие рекомендации...'):
-            results = vector_store.similarity_search(query, k=2, filter=filter_obj)
+        if selected_years:
+            must_conditions.append(FieldCondition(key="metadata.year", range=Range(gte=selected_years[0], lte=selected_years[1])))
+        if selected_ratings:
+            must_conditions.append(FieldCondition(key="metadata.rating", range=Range(gte=selected_ratings[0], lte=selected_ratings[1])))
 
-        st.markdown(f"Найдено результатов: {len(results)}")
+        filter_obj = None
+        if should_conditions or must_conditions:
+            filter_obj = Filter(
+                should=should_conditions if should_conditions else None,
+                must=must_conditions if must_conditions else None
+            )
 
-        film_chain = ({
-                        "question": RunnablePassthrough(),
-                        "metadata": lambda md: json.dumps(md, ensure_ascii=False, indent=2)
-                    }
-                    | film_prompt
-                    | llm
-                    | StrOutputParser())
-        
-        for i, doc in enumerate(results):
-            metadata = doc.metadata
+        if query:
+            with st.spinner('Ищем лучшие рекомендации...'):
+                results = vector_store.similarity_search(query, k=2, filter=filter_obj)
 
-            with st.container():
-                st.markdown(
-    f"<h3 style='text-decoration: underline; color: white; margin-bottom: 0.5em;'>"
-    f"<a href='{metadata.get('page_url', '')}' style='text-decoration: underline; color: #d4a5a5; font-size: 35px;'>"
-    f"{metadata.get('movie_title', '')}</a></h3>",
-    unsafe_allow_html=True)
+            st.markdown(f"Найдено результатов: {len(results)}")
 
-                cols = st.columns([2, 7])
-                with cols[0]:
-                    image_url = metadata.get('image_url', '🎞️ Нет постера')
-                    if image_url and image_url.startswith('http'):
-                        img = load_image_from_url(image_url)
-                        if img:
-                            st.image(img, width=300)
-                        else:
-                            st.write('❌ Не удалось загрузить изображение')
+            film_chain = ({
+                            "question": RunnablePassthrough(),
+                            "metadata": lambda md: json.dumps(md, ensure_ascii=False, indent=2)
+                        }
+                        | film_prompt
+                        | llm
+                        | StrOutputParser())
+            
+            for i, doc in enumerate(results):
+                metadata = doc.metadata
 
-                with cols[1]:
-                    st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Год:</b> {metadata.get('year', '-')}</p>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Жанр:</b> {', '.join(metadata.get('genre', '-'))}</p>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Режиссер:</b> {', '.join(metadata.get('director', '-'))}</p>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Актеры:</b> {', '.join(metadata.get('actors', '-'))}</p>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Рейтинг IMDb:</b> {metadata.get('rating', '-')}</p>", unsafe_allow_html=True)
+                with st.container():
+                    st.markdown(
+        f"<h3 style='text-decoration: underline; color: white; margin-bottom: 0.5em;'>"
+        f"<a href='{metadata.get('page_url', '')}' style='text-decoration: underline; color: #d4a5a5; font-size: 35px;'>"
+        f"{metadata.get('movie_title', '')}</a></h3>",
+        unsafe_allow_html=True)
 
-                    commentary = film_chain.invoke({
-                    "question": query,
-                    "metadata": metadata
-                })
+                    cols = st.columns([2, 7])
+                    with cols[0]:
+                        image_url = metadata.get('image_url', '🎞️ Нет постера')
+                        if image_url and image_url.startswith('http'):
+                            img = load_image_from_url(image_url)
+                            if img:
+                                st.image(img, width=300)
+                            else:
+                                st.write('❌ Не удалось загрузить изображение')
 
-                st.markdown(
-                    f"""<div style='margin-top:10px; font-size:22px; color:#ffe5b4; background:#1c1c1c; padding:10px; border-radius:12px'>
-                    🎙️ <i>{commentary}</i>
-                    </div>""", unsafe_allow_html=True
-                )
+                    with cols[1]:
+                        st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Год:</b> {metadata.get('year', '-')}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Жанр:</b> {', '.join(metadata.get('genre', '-'))}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Режиссер:</b> {', '.join(metadata.get('director', '-'))}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Актеры:</b> {', '.join(metadata.get('actors', '-'))}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p style='font-size:24px; color:#a6d0e4; line-height:1.0; margin:0.2'><b>Рейтинг IMDb:</b> {metadata.get('rating', '-')}</p>", unsafe_allow_html=True)
 
-                st.divider()
+                        commentary = film_chain.invoke({
+                        "question": query,
+                        "metadata": metadata
+                    })
+
+                    st.markdown(
+                        f"""<div style='margin-top:10px; font-size:22px; color:#ffe5b4; background:#1c1c1c; padding:10px; border-radius:12px'>
+                        🎙️ <i>{commentary}</i>
+                        </div>""", unsafe_allow_html=True
+                    )
+
+                    st.divider()
 
 if __name__ == "__main__":
     main()
