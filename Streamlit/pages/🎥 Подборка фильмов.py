@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import json
+import os
 from pathlib import Path
 from PIL import Image
 from io import BytesIO
@@ -23,10 +24,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+QDRANT_FILE = os.path.join(os.path.dirname(__file__), "../..", "db/qdrant_db")
+
 @st.cache_resource
 def get_qdrant_client():
-    db_path = Path(__file__).resolve().parent.parent / "db" / "qdrant_db"
-    return QdrantClient(path=str(db_path))
+    if not os.path.exists(QDRANT_FILE):
+        st.error(f"Файл `{QDRANT_FILE}` не найден. Загрузите его или проверьте путь.")
+        return QdrantClient()
+    return QdrantClient(path=QDRANT_FILE)
 
 client = get_qdrant_client()
 
