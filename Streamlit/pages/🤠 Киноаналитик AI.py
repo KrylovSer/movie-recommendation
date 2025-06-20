@@ -102,7 +102,7 @@ def main():
     update = 1
     if "api_key" not in st.session_state or not st.session_state.api_key:
         update = 0
-        api_key_input = st.text_input("Введите API-ключ:", type="password")
+        api_key_input = st.text_input("Введите API-ключ(https://console.groq.com/keys):", type="password")
         if api_key_input:
             st.session_state.api_key = api_key_input
             st.success("Ключ сохранён.")
